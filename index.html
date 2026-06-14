@@ -840,7 +840,7 @@
         wildflowerProgress = {};
         if (db && currentUser) {
             try {
-                const userDocRef = db.collection('artifacts').doc(appId).collection('users').doc(currentUser.uid).collection('progress').doc('challenge_tracker');
+                const userDocRef = db.collection('artifacts').doc(appId).collection('shared_progress').doc('challenge_tracker');
                 await userDocRef.set({ progress: {}, wildflowers: {} });
             } catch (err) {
                 console.error("Error resetting data in Firestore:", err);
