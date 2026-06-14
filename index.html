@@ -738,7 +738,7 @@
     let db = null;
     let auth = null;
     let currentUser = null;
-    let appId = 'default-app-id';
+    let appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
     let trailProgress = {};
     let wildflowerProgress = {}; // Stores state for the Wildflower Journey
 
