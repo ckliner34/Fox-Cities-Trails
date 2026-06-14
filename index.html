@@ -57,7 +57,6 @@
             measurementId: "G-6WH4M4BX70"
         };
         
-        // This is the specific document path your app will use in the database
         window.__app_id = 'fox-cities-trails'; 
     </script>
 
@@ -685,7 +684,7 @@
             { label: "Auditory: Wind whispering in white pines", icon: "💨" },
             { label: "Sight: Monarch Butterfly on milkweed", icon: "🦋" },
             { label: "Auditory: Distant owl hooting", icon: "🦉" },
-            { label: "Sensory: rich, earthy pine scent", icon: "🌲" },
+            { label: "Sensory: Rich, earthy pine scent", icon: "🌲" },
             { label: "Sight: Intricate spiderweb covered in dew", icon: "🕸️" }
         ],
         Park: [
@@ -738,14 +737,14 @@
     let db = null;
     let auth = null;
     let currentUser = null;
-    let appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
+    let appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'fox-cities-trails';
     let trailProgress = {};
     let wildflowerProgress = {}; // Stores state for the Wildflower Journey
 
     // Reference-safe environment check
     const firebaseConfig = typeof window.__firebase_config !== 'undefined' ? window.__firebase_config : null;
     const initialAuthToken = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : null;
-    const environmentAppId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
+    const environmentAppId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'fox-cities-trails';
 
     // Safe Lucide Loader
     function safeCreateIcons() {
@@ -770,7 +769,7 @@
             el.innerHTML = `
                 <span class="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 font-medium animate-pulse">
                     <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>
-                    Cloud Connected
+                    Cloud Connected (Live Syncing)
                 </span>
             `;
         } else if (status === "connecting") {
@@ -1333,7 +1332,7 @@
         clearTimeout(syncTimeout);
         syncTimeout = setTimeout(async () => {
             try {
-                const userDocRef = db.collection('artifacts').doc(appId).collection('users').doc(currentUser.uid).collection('progress').doc('challenge_tracker');
+                const userDocRef = db.collection('artifacts').doc(appId).collection('shared_progress').doc('challenge_tracker');
                 await userDocRef.set({ progress: trailProgress, wildflowers: wildflowerProgress }, { merge: true });
             } catch (err) {
                 console.error("Cloud syncing failed:", err);
@@ -1745,13 +1744,18 @@
                             updateCloudStatus("syncing");
 
                             const userDocRef = db.collection('artifacts').doc(parsedAppId).collection('shared_progress').doc('challenge_tracker');
-                            const docSnap = await userDocRef.get();
-                            if (docSnap.exists) {
-                                const data = docSnap.data();
-                                if (data.progress) trailProgress = data.progress;
-                                if (data.wildflowers) wildflowerProgress = data.wildflowers;
-                            }
-                            applyStateToDOM();
+                            
+                            // REAL-TIME LISTENER FOR MULTI-USER SYNC
+                            userDocRef.onSnapshot((docSnap) => {
+                                if (docSnap.exists) {
+                                    const data = docSnap.data();
+                                    if (data.progress) trailProgress = data.progress;
+                                    if (data.wildflowers) wildflowerProgress = data.wildflowers;
+                                    applyStateToDOM();
+                                }
+                            }, (error) => {
+                                console.error("Error listening to database:", error);
+                            });
                         } else {
                             updateCloudStatus("sandbox");
                         }
